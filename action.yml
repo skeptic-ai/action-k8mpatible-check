@@ -1,0 +1,43 @@
+name: "K8mpatible Compatibility Check"
+description: "Check Kubernetes tools compatibility with your cluster version"
+author: "k8mpatible"
+branding:
+  icon: "check-circle"
+  color: "blue"
+
+inputs:
+  kubernetes-version:
+    description: "Kubernetes version to check compatibility against"
+    required: true
+  tools:
+    description: 'Comma-separated list of tools to check (e.g., "cert-manager,istio,rook")'
+    required: false
+    default: ""
+  all-tools:
+    description: "Check all supported tools"
+    required: false
+    default: "true"
+  output-format:
+    description: "Output format (json, yaml, table)"
+    required: false
+    default: "table"
+  fail-on-incompatible:
+    description: "Fail the action if any tool is incompatible"
+    required: false
+    default: "true"
+
+outputs:
+  result:
+    description: "Compatibility check result"
+  compatible:
+    description: "Boolean indicating if all tools are compatible"
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - ${{ inputs.kubernetes-version }}
+    - ${{ inputs.tools }}
+    - ${{ inputs.all-tools }}
+    - ${{ inputs.output-format }}
+    - ${{ inputs.fail-on-incompatible }}

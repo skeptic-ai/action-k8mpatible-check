@@ -1,0 +1,70 @@
+name: Kubernetes Compatibility Check
+
+on:
+  pull_request:
+    paths:
+      - "kubernetes/**"
+      - "helm/**"
+      - "manifests/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "kubernetes/**"
+      - "helm/**"
+      - "manifests/**"
+  workflow_dispatch:
+    inputs:
+      kubernetes-version:
+        description: "Kubernetes version to check against"
+        required: true
+        default: "1.28.0"
+        type: string
+
+jobs:
+  compatibility-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Basic usage - check all tools against a specific Kubernetes version
+      - name: Check Kubernetes Compatibility
+        id: compatibility
+        uses: k8mpatible/action-k8mpatible-check@v1
+        with:
+          kubernetes-version: ${{ github.event.inputs.kubernetes-version || '1.28.0' }}
+          all-tools: "true"
+          output-format: "table"
+          fail-on-incompatible: "true"
+
+      # Example of using the output in a subsequent step
+      - name: Display Compatibility Result
+        run: |
+          echo "Compatibility check result: ${{ steps.compatibility.outputs.compatible }}"
+          echo "Full result:"
+          echo "${{ steps.compatibility.outputs.result }}"
+
+  # Example of checking specific tools only
+  specific-tools-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Specific Tools Compatibility
+        id: specific-compatibility
+        uses: k8mpatible/action-k8mpatible-check@v1
+        with:
+          kubernetes-version: ${{ github.event.inputs.kubernetes-version || '1.28.0' }}
+          tools: "cert-manager,istio,external-secrets"
+          all-tools: "false"
+          output-format: "json"
+          fail-on-incompatible: "false"
+
+      # Example of conditional step based on compatibility result
+      - name: Warning for Incompatible Tools
+        if: steps.specific-compatibility.outputs.compatible == 'false'
+        run: |
+          echo "::warning::Some tools are incompatible with Kubernetes ${{ github.event.inputs.kubernetes-version || '1.28.0' }}"
+          echo "Please review the compatibility report and update your tools accordingly."
