@@ -6,21 +6,14 @@ branding:
   color: "blue"
 
 inputs:
-  kubernetes-version:
-    description: "Kubernetes version to check compatibility against"
-    required: true
-  tools:
-    description: 'Comma-separated list of tools to check (e.g., "cert-manager,istio,rook")'
+  kubeconfig:
+    description: "Path to kubeconfig file. Leave empty to use default location or in-cluster config"
     required: false
     default: ""
-  all-tools:
-    description: "Check all supported tools"
+  output-file:
+    description: "Path to output YAML file for scan results. If not specified, results will only be logged"
     required: false
-    default: "true"
-  output-format:
-    description: "Output format (json, yaml, table)"
-    required: false
-    default: "table"
+    default: ""
   fail-on-incompatible:
     description: "Fail the action if any tool is incompatible"
     required: false
@@ -36,8 +29,6 @@ runs:
   using: "docker"
   image: "Dockerfile"
   args:
-    - ${{ inputs.kubernetes-version }}
-    - ${{ inputs.tools }}
-    - ${{ inputs.all-tools }}
-    - ${{ inputs.output-format }}
+    - ${{ inputs.kubeconfig }}
+    - ${{ inputs.output-file }}
     - ${{ inputs.fail-on-incompatible }}

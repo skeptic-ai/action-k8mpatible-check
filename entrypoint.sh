@@ -2,33 +2,35 @@
 set -e
 
 # Parse input arguments
-KUBERNETES_VERSION="$1"
-TOOLS="$2"
-ALL_TOOLS="$3"
-OUTPUT_FORMAT="$4"
-FAIL_ON_INCOMPATIBLE="$5"
+KUBECONFIG_PATH="$1"
+OUTPUT_FILE="$2"
+FAIL_ON_INCOMPATIBLE="$3"
 
 echo "::group::K8mpatible Compatibility Check"
-echo "Checking compatibility with Kubernetes version: $KUBERNETES_VERSION"
+echo "Running k8mpatible compatibility scan..."
 
 # Prepare command arguments
-CMD_ARGS="--k8s-version $KUBERNETES_VERSION --output $OUTPUT_FORMAT"
+CMD_ARGS=""
 
-# Check if specific tools are provided
-if [ -n "$TOOLS" ] && [ "$TOOLS" != "" ]; then
-  echo "Checking compatibility for tools: $TOOLS"
-  TOOLS_ARG=$(echo "$TOOLS" | tr ',' ' ')
-  CMD_ARGS="$CMD_ARGS $TOOLS_ARG"
-elif [ "$ALL_TOOLS" == "true" ]; then
-  echo "Checking compatibility for all supported tools"
+# Add kubeconfig path if provided
+if [ -n "$KUBECONFIG_PATH" ] && [ "$KUBECONFIG_PATH" != "" ]; then
+  echo "Using kubeconfig: $KUBECONFIG_PATH"
+  CMD_ARGS="$CMD_ARGS --kubeconfig $KUBECONFIG_PATH"
 else
-  echo "No tools specified and all-tools is not true. Please specify tools or set all-tools to true."
-  exit 1
+  echo "Using default kubeconfig location or in-cluster config"
 fi
 
-# Run k8mpatible compatibility check
-echo "Running: k8mpatible check $CMD_ARGS"
-RESULT=$(k8mpatible check $CMD_ARGS)
+# Add output file if provided
+if [ -n "$OUTPUT_FILE" ] && [ "$OUTPUT_FILE" != "" ]; then
+  echo "Output will be saved to: $OUTPUT_FILE"
+  CMD_ARGS="$CMD_ARGS --output $OUTPUT_FILE"
+else
+  echo "Output will only be logged to stdout"
+fi
+
+# Run k8mpatible scan
+echo "Running: k8mpatible $CMD_ARGS"
+RESULT=$(k8mpatible $CMD_ARGS 2>&1)
 EXIT_CODE=$?
 
 # Output the result
@@ -40,16 +42,19 @@ echo "result<<EOF" >> $GITHUB_OUTPUT
 echo "$RESULT" >> $GITHUB_OUTPUT
 echo "EOF" >> $GITHUB_OUTPUT
 
-# Determine if all tools are compatible
+# Determine if all tools are compatible based on exit code
 if [ $EXIT_CODE -eq 0 ]; then
   echo "compatible=true" >> $GITHUB_OUTPUT
-  echo "All tools are compatible with Kubernetes $KUBERNETES_VERSION"
+  echo "✅ No incompatibilities found in cluster"
 else
   echo "compatible=false" >> $GITHUB_OUTPUT
-  echo "Some tools are incompatible with Kubernetes $KUBERNETES_VERSION"
+  echo "❌ Incompatibilities found in cluster"
   
-  # Exit with error if fail-on-incompatible is true
-  if [ "$FAIL_ON_INCOMPATIBLE" == "true" ]; then
+  # Exit with error if fail-on-incompatible is true (default)
+  if [ "$FAIL_ON_INCOMPATIBLE" != "false" ]; then
+    echo "Action failed due to incompatibilities"
     exit 1
+  else
+    echo "Action completed with incompatibilities (fail-on-incompatible is disabled)"
   fi
 fi
