@@ -1,6 +1,6 @@
 # K8mpatible Compatibility Check Action
 
-This GitHub Action checks the compatibility of Kubernetes tools in your cluster using the [k8mpatible](https://github.com/k8mpatible/k8mpatible) CLI.
+This GitHub Action checks the compatibility of Kubernetes tools in your cluster using the [k8mpatible](https://github.com/skeptic-ai/k8mpatible) CLI.
 
 ## What is k8mpatible?
 
@@ -141,6 +141,55 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: compatibility-report
+          path: compatibility-report.yaml
+```
+
+### Complete Workflow with GCP GKE (Workload Identity)
+
+```yaml
+name: K8mpatible Compatibility Scan - GCP GKE
+
+on:
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: your-project-id
+
+jobs:
+  compatibility-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/123456789/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "github-actions@your-project-id.iam.gserviceaccount.com"
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: your-cluster-name
+          location: us-central1-a
+
+      - name: Run K8mpatible Compatibility Scan
+        uses: skeptic-ai/action-k8mpatible-check@v0.1.2
+        with:
+          output-file: 'compatibility-report.yaml'
+          fail-on-incompatible: 'false'
+
+      - name: Upload Compatibility Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compatibility-report-${{ github.run_number }}
           path: compatibility-report.yaml
 ```
 

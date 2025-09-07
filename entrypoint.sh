@@ -33,8 +33,12 @@ echo "Running: k8mpatible $CMD_ARGS"
 RESULT=$(k8mpatible $CMD_ARGS 2>&1)
 EXIT_CODE=$?
 
-# Output the result
+# Output the result with clear section header
+echo ""
+echo "📋 Compatibility Scan Results:"
+echo "================================"
 echo "$RESULT"
+echo "================================"
 echo "::endgroup::"
 
 # Set outputs for GitHub Actions
