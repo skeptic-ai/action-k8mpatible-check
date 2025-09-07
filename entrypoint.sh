@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+# Note: We don't use 'set -e' here because k8mpatible may exit with code 1 
+# when incompatibilities are found, and we want to handle that gracefully
 
 # Parse input arguments
 KUBECONFIG_PATH="$1"
@@ -8,6 +9,24 @@ FAIL_ON_INCOMPATIBLE="$3"
 
 echo "::group::K8mpatible Compatibility Check"
 echo "Running k8mpatible compatibility scan..."
+
+# Debug: Check if k8mpatible binary exists and is executable
+if ! command -v k8mpatible &> /dev/null; then
+  echo "❌ Error: k8mpatible binary not found in PATH"
+  exit 1
+fi
+
+echo "✅ k8mpatible binary found: $(which k8mpatible)"
+
+# Debug: Check kubernetes connectivity
+echo "🔍 Testing Kubernetes connectivity..."
+if kubectl cluster-info &> /dev/null; then
+  echo "✅ Kubernetes cluster is accessible"
+  kubectl get nodes --no-headers 2>/dev/null | wc -l | xargs echo "📊 Cluster has" | xargs echo "nodes"
+else
+  echo "❌ Warning: Cannot connect to Kubernetes cluster"
+  echo "This may cause the scan to hang or fail"
+fi
 
 # Prepare command arguments
 CMD_ARGS=""
@@ -30,8 +49,22 @@ fi
 
 # Run k8mpatible scan
 echo "Running: k8mpatible $CMD_ARGS"
-RESULT=$(k8mpatible $CMD_ARGS 2>&1)
+echo "Starting scan..."
+
+# Run with timeout to prevent hanging
+timeout 300 k8mpatible $CMD_ARGS > /tmp/k8mpatible_output.txt 2>&1
 EXIT_CODE=$?
+
+# Check if command timed out
+if [ $EXIT_CODE -eq 124 ]; then
+  echo "❌ k8mpatible scan timed out after 5 minutes"
+  RESULT="Error: k8mpatible scan timed out after 5 minutes. This may indicate cluster connectivity issues or a large number of resources to scan."
+  EXIT_CODE=1
+else
+  # Read the output
+  RESULT=$(cat /tmp/k8mpatible_output.txt)
+  echo "Scan completed with exit code: $EXIT_CODE"
+fi
 
 # Output the result with clear section header
 echo ""
