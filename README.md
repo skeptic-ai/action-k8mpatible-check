@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check Kubernetes Compatibility
-        uses: k8mpatible/action-k8mpatible-check@v1
+        uses: skeptic-ai/action-k8mpatible-check@v0.1.2
         with:
           kubeconfig: '${{ github.workspace }}/.kube/config'
           output-file: 'compatibility-report.yaml'
@@ -63,14 +63,14 @@ The action:
 
 ```yaml
 - name: Check Kubernetes Compatibility
-  uses: k8mpatible/action-k8mpatible-check@v1
+  uses: skeptic-ai/action-k8mpatible-check@v0.1.2
 ```
 
 ### With Custom Kubeconfig
 
 ```yaml
 - name: Check Kubernetes Compatibility
-  uses: k8mpatible/action-k8mpatible-check@v1
+  uses: skeptic-ai/action-k8mpatible-check@v0.1.2
   with:
     kubeconfig: '${{ github.workspace }}/.kube/config'
 ```
@@ -79,7 +79,7 @@ The action:
 
 ```yaml
 - name: Check Kubernetes Compatibility
-  uses: k8mpatible/action-k8mpatible-check@v1
+  uses: skeptic-ai/action-k8mpatible-check@v0.1.2
   with:
     output-file: 'compatibility-report.yaml'
 
@@ -95,7 +95,7 @@ The action:
 ```yaml
 - name: Check Kubernetes Compatibility
   id: compatibility
-  uses: k8mpatible/action-k8mpatible-check@v1
+  uses: skeptic-ai/action-k8mpatible-check@v0.1.2
   with:
     fail-on-incompatible: 'false'
 
@@ -131,7 +131,7 @@ jobs:
           aws eks update-kubeconfig --region us-west-2 --name my-cluster
           
       - name: Check Kubernetes Compatibility
-        uses: k8mpatible/action-k8mpatible-check@v1
+        uses: skeptic-ai/action-k8mpatible-check@v0.1.2
         with:
           kubeconfig: '${{ env.HOME }}/.kube/config'
           output-file: 'compatibility-report.yaml'

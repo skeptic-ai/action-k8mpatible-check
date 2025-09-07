@@ -17,12 +17,8 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
     mv kubectl /usr/local/bin/
 
 # Install k8mpatible CLI
-RUN LATEST_RELEASE=$(curl -s https://api.github.com/repos/k8mpatible/k8mpatible/releases/latest | jq -r .tag_name) && \
-    curl -L "https://github.com/k8mpatible/k8mpatible/releases/download/${LATEST_RELEASE}/k8mpatible_$(echo ${LATEST_RELEASE} | sed 's/^v//')_linux_amd64.tar.gz" -o k8mpatible.tar.gz && \
-    tar -xzf k8mpatible.tar.gz && \
-    chmod +x k8mpatible && \
-    mv k8mpatible /usr/local/bin/ && \
-    rm k8mpatible.tar.gz
+RUN curl -L https://github.com/skeptic-ai/k8mpatible/releases/download/v0.1.5/k8mpatible_0.1.5_Linux_x86_64.tar.gz | tar xz && \
+    mv k8mpatible /usr/local/bin/
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
